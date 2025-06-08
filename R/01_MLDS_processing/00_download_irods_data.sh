@@ -38,7 +38,7 @@ samples=(
 # L040_TP4
 '/seq/illumina/runs/47/47089/cellranger/cellranger700_count_47089_SB_Leuk13645524_GRCh38-2020-A'
 
-# L041_D
+# L041_D (not good quality)
 '/seq/illumina/runs/46/46351/cellranger/cellranger700_count_46351_SB_Leuk13234200_GRCh38-2020-A'
 '/seq/illumina/runs/46/46351/cellranger/cellranger700_count_46351_SB_Leuk13234201_GRCh38-2020-A'
 '/seq/illumina/runs/46/46351/cellranger/cellranger700_count_46351_SB_Leuk13234202_GRCh38-2020-A'
@@ -77,6 +77,22 @@ samples=(
 '/seq/illumina/runs/48/48209/cellranger/cellranger700_count_48209_ALeuk_RNA14564481_GRCh38-2020-A'
 # L156_Relapse
 '/seq/illumina/runs/48/48983/cellranger/cellranger700_count_48983_MY_200531_14784986_GRCh38-2020-A'
+'/seq/illumina/runs/48/48983/cellranger/cellranger700_count_48983_MY_200531_14784987_GRCh38-2020-A'
+
+# L178_D
+'/seq/illumina/runs/49/49031/cellranger/cellranger700_count_49031_ALeuk_RNA14831998_GRCh38-2020-A'
+'/seq/illumina/runs/49/49031/cellranger/cellranger700_count_49031_ALeuk_RNA14831999_GRCh38-2020-A'
+# L178_TP1
+'/seq/illumina/runs/49/49226/cellranger/cellranger700_count_49226_ALeuk_RNA14910210_GRCh38-2020-A'
+'/seq/illumina/runs/49/49226/cellranger/cellranger700_count_49226_ALeuk_RNA14910211_GRCh38-2020-A'
+
+# L182_D
+'/seq/illumina/runs/49/49087/cellranger/cellranger700_count_49087_ALeuk_RNA14872269_GRCh38-2020-A'
+'/seq/illumina/runs/49/49087/cellranger/cellranger700_count_49087_ALeuk_RNA14872270_GRCh38-2020-A'
+
+# L114_D
+'/seq/illumina/runs/49/49087/cellranger/cellranger700_count_49087_ALeuk_RNA14872267_GRCh38-2020-A'
+'/seq/illumina/runs/49/49087/cellranger/cellranger700_count_49087_ALeuk_RNA14872268_GRCh38-2020-A'
 
 # CC1
 '/seq/illumina/runs/48/48097/cellranger/cellranger700_count_48097_MY_200531_14406280_GRCh38-2020-A'
@@ -136,17 +152,9 @@ done
 # '/seq/illumina/runs/48/48097/cellranger/cellranger700_count_48097_CG_SB_NB14406184_GRCh38-2020-A'
 # '/seq/illumina/runs/48/48097/cellranger/cellranger700_count_48097_CG_SB_NB14406185_GRCh38-2020-A'
 
-# '/seq/illumina/runs/48/48983/cellranger/cellranger700_count_48983_MY_200531_14784987_GRCh38-2020-A'
-# '/seq/illumina/runs/49/49087/cellranger/cellranger700_count_49087_ALeuk_RNA14872267_GRCh38-2020-A'
-# '/seq/illumina/runs/49/49087/cellranger/cellranger700_count_49087_ALeuk_RNA14872268_GRCh38-2020-A'
-# '/seq/illumina/runs/49/49087/cellranger/cellranger700_count_49087_ALeuk_RNA14872269_GRCh38-2020-A'
-# '/seq/illumina/runs/49/49087/cellranger/cellranger700_count_49087_ALeuk_RNA14872270_GRCh38-2020-A'
-# '/seq/illumina/runs/49/49031/cellranger/cellranger700_count_49031_ALeuk_RNA14831998_GRCh38-2020-A'
-# '/seq/illumina/runs/49/49031/cellranger/cellranger700_count_49031_ALeuk_RNA14831999_GRCh38-2020-A'
+
 # '/seq/illumina/runs/49/49031/cellranger/cellranger700_count_49031_ALeuk_RNA14832000_GRCh38-2020-A'
 # '/seq/illumina/runs/49/49031/cellranger/cellranger700_count_49031_ALeuk_RNA14832001_GRCh38-2020-A'
-# '/seq/illumina/runs/49/49226/cellranger/cellranger700_count_49226_ALeuk_RNA14910210_GRCh38-2020-A'
-# '/seq/illumina/runs/49/49226/cellranger/cellranger700_count_49226_ALeuk_RNA14910211_GRCh38-2020-A'
 # )
 
 
