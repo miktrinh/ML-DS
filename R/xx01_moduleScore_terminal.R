@@ -976,7 +976,7 @@ figS3_gata1s_moduleScore_inBulkSamples = function(){
       ggtitle(title)+xlab('')+ylab('Module score')+
       theme(panel.border = element_rect(fill=F,colour = 'black',linewidth = 0.2),axis.line = element_blank(),
             strip.background=element_rect(linewidth=0),
-            strip.text = element_text(size = 11,colour = 'black'),
+            strip.text = element_text(size = 6,colour = 'black'),
             axis.ticks = element_line(colour = 'black',linewidth = 0.2),
             axis.text.x = element_text(size = 10,angle = 90, vjust = 0.5,hjust = 1,colour = 'black'),
             axis.text = element_text(colour = 'black'))
@@ -1036,11 +1036,12 @@ figxx_MLDS.degs_moduleScore_inBulkSamples = function(){
   #
   allScore_og=allScore
   allScore$sampleGroup = as.character(allScore$Category)
-  allScore$sampleGroup[allScore$sampleGroup == 'TAM_MLDS'] = 'TAM_progressive'
-
+  allScore$sampleGroup[allScore$sampleGroup == 'TAM_MLDS'] = 'Progressive TAM'
+  allScore$sampleGroup[allScore$sampleGroup == 'TAM_conventional'] = 'Conventional TAM'
+  
   #allScore$sampleGroup[allScore$sampleGroup == 'TAM' & allScore$Event == 1] = 'TAM:1'
   #allScore$sampleGroup[allScore$sampleGroup == 'TAM' & allScore$Event == 0] = 'TAM:0'
-  allScore$sampleGroup = factor(allScore$sampleGroup,c('TAM_conventional','TAM_progressive','TAM_earlyDeath','TAM_unknown','TAM_MLDS','unclassified','MLDS',
+  allScore$sampleGroup = factor(allScore$sampleGroup,c('Conventional TAM','Progressive TAM','TAM_earlyDeath','TAM_unknown','TAM_MLDS','unclassified','MLDS',
                                                        'AMKL','MLL','MLL_rearrangement',
                                                        'HSC','MPP','MEP','CMP','GMP','LMPP','ELP','PreProB','ProB','Bcell'))
 
@@ -1113,7 +1114,7 @@ figxx_MLDS.degs_moduleScore_inBulkSamples = function(){
   dd = read.delim(file.path(plotDir,'Fig3_MLDS_topGenes_moduleScore_bulkSamples_v2_newBulkMdat_rawData.tsv'),sep = '\t')
   dd.sub = dd[dd$moduleType == 'MLDS_topGenes_all' & dd$sampleGroup %in% c('TAM_conventional','TAM_progressive'),]
   wilcox.test(dd.sub$TotalScore[dd.sub$sampleGroup == 'TAM_conventional'],dd.sub$TotalScore[dd.sub$sampleGroup == 'TAM_progressive'],alternative = 'less')
-
+  t.test(dd.sub$TotalScore[dd.sub$sampleGroup == 'TAM_conventional'],dd.sub$TotalScore[dd.sub$sampleGroup == 'TAM_progressive'],alternative = 'less')
 
   plotFun_MLDS_moduleScore_inBulkSamples = function(noFrame=FALSE,noPlot=FALSE){
 

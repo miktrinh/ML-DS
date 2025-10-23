@@ -2078,8 +2078,8 @@ fig3a_MLDS_UMAP = function(){
     # mlds$broadLineage = broadAnno$broadLineage[match(mlds$cellID,broadAnno$cellID)]
     
     mdat = read.csv(mlds_mdat_fp)
-    mdat$annot = mdat$annot_aug24
-    mdat$finalAnn_broad = mdat$annot_aug24
+    mdat$annot = mdat$annot_aug24_new
+    mdat$finalAnn_broad = mdat$annot_aug24_new
     mdat$broadLineage[mdat$finalAnn_broad == 'Tumour' & mdat$broadLineage != 'Tumour'] = 'Tumour'
     mdat$broadLineage[mdat$finalAnn_broad %in% c('Tum_MK?','Tumour_WT')] = 'Tumour_unsure'
     
@@ -2165,6 +2165,40 @@ fig3a_MLDS_UMAP = function(){
   }
   
   saveFig(file.path(plotDir,'Fig2_MLDS_TumNorm_UMAP'),plotFun_byTumNorm_UMAP,rawData=data,width = 3.3,height = 3,res = 500)
+  
+  
+  
+  plotFun_byDiseae_UMAP = function(noFrame=FALSE,noPlot=FALSE){
+    par(mar=c(0.1,0.1,1,0.1))
+    dd$disease_category = ifelse(dd$broadLineage %in% c('TAM','TAM_Relapse'),'TAM',
+                                 ifelse(dd$broadLineage %in% c('Tumour','Tumour_postChemo','Tumour_Refractory','Tumour_Relapse','Tumour_Relapse2','Tumour_unsure'),'ML-DS','Normal'))
+    
+    ccs = c('TAM' = '#b5d5ef',#'TAM_D' = 'dodgerblue2',
+            'ML-DS'='#463A2F',
+            'Normal' = grey(0.8))
+    
+    plot(dd$UMAP_1,dd$UMAP_2,
+         las=1,
+         type='n',
+         cex.main = 0.85,xaxt='n',yaxt='n',
+         xlab='',ylab='',
+         main=ifelse(noFrame,'','TAM - MLDS'),
+         frame.plot=F)
+    
+    if(!noPlot){
+      # points(dd$UMAP_1,dd$UMAP_2,
+      #        col = colAlpha(ccs[dd$tumNormCat],alphas = 0.75),
+      #        pch = 19,
+      #        cex=0.03)
+      points(dd$UMAP_1,dd$UMAP_2,
+             col = colAlpha(ccs[dd$disease_category],alphas = 0.75),
+             pch = 19,
+             cex=0.03)
+    }
+
+  }
+  
+  saveFig(file.path(plotDir,'SuppFig2_MLDS_byDisease_UMAP'),plotFun_byDiseae_UMAP,rawData=data,width = 3.3,height = 3,res = 500)
   
   
   
@@ -2337,6 +2371,20 @@ fig2a_MLDS_GATA1s_status = function(){
     dd$GATA1s_status[dd$GATA1s_status %in% c('noGATA1expr','no_GATA1_expr')] = 'No GATA1 expression'
     dd$GATA1s_status2 = dd$GATA1s_status
     dd$GATA1s_status2[dd$GATA1s_status2 %in% c('Not informative','No coverage at mutation site','uninformative')] = 'Uninformative'
+    
+    dd_summary = as.data.frame(table(dd$GATA1s_status2,dd$broadLineage == 'Tumour',dd$donorID))
+    dd_summary = dd_summary[dd_summary$Freq > 0,]
+    colnames(dd_summary) = c('GATA1_status','isTumour','donorID','nCell')
+    dd_summary = dd_summary[dd_summary$isTumour == T & 
+                              !dd_summary$donorID %in% c('CC1','L041'),]
+    dd_summary = dd_summary %>% group_by(donorID) %>% mutate(totalTumourCell = sum(nCell),
+                                                             perc = 100*nCell / totalTumourCell)
+    100*73545/sum(dd_summary$nCell)
+    sum(dd_summary$nCell[dd_summary$GATA1_status == 'GATA1s mutation'])
+    sum(dd_summary$nCell[dd_summary$GATA1_status == 'Uninformative'])
+    range(dd_summary$perc[dd_summary$GATA1_status == 'GATA1s mutation'])
+    
+    
   }
   
   #005579 - WT
@@ -3676,7 +3724,7 @@ write.csv(mlds_data_for_EGA,'~/lustre_mt22/Aneuploidy/manuscriptDraft_1124/noCC3
 
 ##----- Sup.Fig X
 ## Plot PURPLE CN profile for L076 and L038
-patientID = 'L038'
+patientID = 'L076'
 if(patientID == 'L076'){
   samples_manifest = data.frame(PDID=c('PD62331c','PD62331a','PD64665a','PD66167a'),
                                 projectid=rep(3484,4),
@@ -3745,7 +3793,7 @@ figSuppXX_PURPLE_CNprofile = function(){
       
       print(p)
     }
-    saveFig(file.path(plotDir,paste0('Sup.Figxx_',patientID,'_',s,'_purpleCNprofile')),plotFun_PURPLE_CNprofile,rawData=purple_CNV,width = 8,height = 2.5,res = 500,useDingbats = F)
+    saveFig(file.path(plotDir,paste0('Sup.Figxx_',patientID,'_',s,'_purpleCNprofile')),plotFun_PURPLE_CNprofile,rawData=purple_CNV,width = 8,height = 2.5,res = 500)
   }  
 }
 

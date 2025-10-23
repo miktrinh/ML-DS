@@ -356,18 +356,20 @@ import_UCell_result = function(outDir,module_type){
 import_HenningsBulkSamples = function(gns=NULL,rm_henning_healthy=F,oxfordBulk=T,filter_lowExpr_gene=T,
                                       tpm_fp = c('~/lustre_mt22/Down_Leukemia/Down_Leukemia_Klusmann_StarSalmon_tpm.csv')){
   library(edgeR)
+  library(GenomicRanges)
   if(is.null(gns)){
     # Create geneMap 
     library(GenomicFeatures)
     #Define genomic coordinates
-    gtf = '/nfs/srpipe_references/downloaded_from_10X/refdata-cellranger-arc-GRCh38-2020-A/genes/genes.gtf.gz'
-    txdb = makeTxDbFromGFF(gtf)
-    gns = genes(txdb)
+    gtf = '/nfs/srpipe_references/downloaded_from_10X/refdata-gex-GRCh38-2020-A/genes/genes.gtf'
+    txdb = GenomicFeatures::makeTxDbFromGFF(gtf)
+    gns = GenomicFeatures::genes(txdb)
+    
   }
   
   
   ##------  Create Gene Map -------##
-  rawCnt = read_excel('~/lustre_mt22/Down_Leukemia/Down_Leukemia_Klusmann_Dec22.xlsx',sheet = 'StarSalmon_Counts')
+  rawCnt = readxl::read_excel('~/lustre_mt22/MLDS_scRNAseq/bulkRNA_Data/Down_Leukemia_Klusmann_Apr23.xlsx',sheet = 'StarSalmon_Counts')
   bulk_geneMap = rawCnt[,colnames(rawCnt) %in% c('gene_id','gene_name','EffectiveLength')]
   m = match(bulk_geneMap$gene_id,gns$gene_id)
   bulk_geneMap$chr = 'unknown'
@@ -378,7 +380,7 @@ import_HenningsBulkSamples = function(gns=NULL,rm_henning_healthy=F,oxfordBulk=T
   ##------  Import Hennings bulk samples metadata -------##
   message('Importing bulk samples metadata....')
   ## Import bulk sample metadata
-  mdat = read_excel('~/lustre_mt22/Down_Leukemia/Down_Leukemia_Klusmann_Dec22.xlsx',sheet = 'Annotation')
+  mdat = readxl::read_excel('~/lustre_mt22/MLDS_scRNAseq/bulkRNA_Data/Down_Leukemia_Klusmann_Apr23.xlsx',sheet = 'Annotation')
   mdat = mdat[,c('Sample','Source','Subgroup')]
   mdat$Sample = gsub('-','.',mdat$Sample)
   
@@ -397,7 +399,7 @@ import_HenningsBulkSamples = function(gns=NULL,rm_henning_healthy=F,oxfordBulk=T
   
   ## Import survival data ##
   #survival_mdat = read_excel('~/lustre_mt22/mt22/Down_Leukemia_Klusmann_Apr23.xlsx',sheet = 'QC_survival')
-  survival_mdat = read_excel('~/lustre_mt22/Hennings_bulkRNAseq_metadata.xlsx')
+  survival_mdat = readxl::read_excel('~/lustre_mt22/MLDS_scRNAseq/bulkRNA_Data/Hennings_bulkRNAseq_metadata.xlsx')
   ## Only keep samples with event information
   #survival_mdat = survival_mdat[survival_mdat$Event != '-',]
   survival_mdat$Sample = gsub('-','.',survival_mdat$Sample)
@@ -417,7 +419,7 @@ import_HenningsBulkSamples = function(gns=NULL,rm_henning_healthy=F,oxfordBulk=T
   rawCnt = rawCnt[,colnames(rawCnt) %in% mdat$Sample]
   
   ## Filter out lowly expressed genes
-  bulk_dge = DGEList(counts = rawCnt, genes = rownames(rawCnt))
+  bulk_dge = edgeR::DGEList(counts = rawCnt, genes = rownames(rawCnt))
   cpmCnt = edgeR::cpm(bulk_dge)
   
   
@@ -534,9 +536,9 @@ bulkRNA_moduleScore_singScore = function(moduleList,module_type,gns,rm_henning_h
   ##----- 3. Prepare mdat -----##
   bulk_mdat$os = bulk_mdat$OS
   bulk_mdat$os_group = '-'
-  bulk_mdat$os_group[!is.na(bulk_mdat$os) & bulk_mdat$os != '-'] = ifelse(as.numeric(bulk_mdat$os[bulk_mdat$os != '-'])<2,'low',
-                                                                          ifelse(as.numeric(bulk_mdat$os[bulk_mdat$os != '-'])<5,'mid',
-                                                                                 ifelse(as.numeric(bulk_mdat$os[bulk_mdat$os != '-'])<10,'mid2','high')))
+  bulk_mdat$os_group[!is.na(bulk_mdat$os) & bulk_mdat$os != '-'] = ifelse(as.numeric(bulk_mdat$os[!is.na(bulk_mdat$os) & bulk_mdat$os != '-'])<2,'low',
+                                                                          ifelse(as.numeric(bulk_mdat$os[!is.na(bulk_mdat$os) & bulk_mdat$os != '-'])<5,'mid',
+                                                                                 ifelse(as.numeric(bulk_mdat$os[!is.na(bulk_mdat$os) & bulk_mdat$os != '-'])<10,'mid2','high')))
   bulk_mdat$category = ifelse(bulk_mdat$Subgroup %in% c('CMP','GMP','MEP','HSC','MPP','Bcell','ELP','LMPP','PreProB','ProB'),'Normal',
                               ifelse(bulk_mdat$Subgroup %in% c('TMD','MLDS'),'TAM / MLDS','Other leukaemia'))
   
@@ -552,7 +554,7 @@ bulkRNA_moduleScore_singScore = function(moduleList,module_type,gns,rm_henning_h
   ##----- 4.  Score the module -----##
   mtx = tpm_count[,colnames(tpm_count) %in% bulk_mdat$Sample[!grepl('^PDX',bulk_mdat$Sample)]]
   ## apply the rankGenes method
-  bulk_ranked = rankGenes(mtx)
+  bulk_ranked = singscore::rankGenes(mtx)
   
   
   ## apply the scoring function
@@ -560,26 +562,26 @@ bulkRNA_moduleScore_singScore = function(moduleList,module_type,gns,rm_henning_h
   for(i in 1:length(moduleList)){
     if(names(moduleList)[i] == 'all'){
       if(module_type == 'GATA1s_topGenes'){
-        moduleScores = simpleScore(bulk_ranked,
+        moduleScores = singscore::simpleScore(bulk_ranked,
                                    upSet = moduleList[['TAM.MLDS.up']],
                                    downSet = moduleList[['TAM.MLDS.down']])  
       }else if(module_type == 'MLDS_topGenes'){
-        moduleScores = simpleScore(bulk_ranked,
+        moduleScores = singscore::simpleScore(bulk_ranked,
                                    upSet = moduleList[['MLDS_up']],
                                    downSet = moduleList[['MLDS_down']])  
       }else{
         print('Unrecognized module type, please check!')
       }
       
-      # moduleScores = simpleScore(bulk_ranked,
+      # moduleScores = singscore::simpleScore(bulk_ranked,
       #                          upSet = moduleList[['all_up']],
       #                          downSet = moduleList[['all_down']])
-      # moduleScores = simpleScore(bulk_ranked,
+      # moduleScores = singscore::simpleScore(bulk_ranked,
       #                            upSet = moduleList[['L075_down']],
       #                            downSet = moduleList[['L075_up']])
       moduleScores = moduleScores[,c('TotalScore', 'TotalDispersion')]
     }else{
-      moduleScores = simpleScore(bulk_ranked,upSet = moduleList[[i]])
+      moduleScores = singscore::simpleScore(bulk_ranked,upSet = moduleList[[i]])
     }
     
     # create a dataframe with the data required: scores and sample group

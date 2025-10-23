@@ -1017,3 +1017,19 @@ DotPlot(fLiver,idents = 'MEMP_MEP',group.by = 'group_tmp',features = c('RUNX1','
         legend.position = 'top',legend.text = element_text(size=9),legend.key.size = unit(0.5,'cm')) + xlab('') + ylab('') 
 
 DimPlot(mlds,group.by = 'donorID',label = T,repel = T,label.box = T,cols = col25) + NoLegend()
+
+
+
+##----------------------------------------------------------------##
+##  8. Explore ML-DS module as biomarkers for progressive TAM   ####
+##----------------------------------------------------------------##
+mlds_vs_goodTAM = read.csv('~/lustre_mt22/MLDS_scRNAseq/Results/5_goodTAM_vs_MLDS/jul24/DESeq2_goodTAM.vs.all.dMLDS_topDEGs_2410.csv',row.names = 1)
+mlds_vs_goodTAM = mlds_vs_goodTAM[abs(mlds_vs_goodTAM$cellFrac.diff) >= 0.2,]
+mlds = readRDS('~/ML-DS/Results/03_MLDS_annotation/MLDS_clean_annotated_2408_noUnknowns.RDS')
+Idents(mlds) = mlds$annot
+
+DotPlot(mlds,idents = 'Tumour',group.by = 'donorID',
+        features = mlds_vs_goodTAM$geneSym[mlds_vs_goodTAM$direction == 'MLDS_up' & mlds_vs_goodTAM$isCSM==T])+
+  RotatedAxis()
+
+
