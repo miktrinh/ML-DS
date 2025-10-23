@@ -1,10 +1,5 @@
 ##-------- Prepare Reference foetal objects (fLiver, fAdr, fKidney)  --------##
 ## 1. Reprocess remapped foetal references scRNA data for kidney, liver, adrenal
-## [230324]: Not completed - need to revise properly...
-
-
-
-setwd('~/lustre_mt22/Aneuploidy/Results/')
 
 #------------------------#
 ##      Libraries     ####
@@ -12,10 +7,9 @@ setwd('~/lustre_mt22/Aneuploidy/Results/')
 library(tidyverse)
 library(readxl)
 library(Seurat)
-source("/lustre/scratch125/casm/team274sb/mt22/generalScripts/utils/misc.R")
-source("/lustre/scratch125/casm/team274sb/mt22/generalScripts/utils/sc_utils.R")
-source("/lustre/scratch125/casm/team274sb/mt22/generalScripts/utils/sc_basicQC.R")
-
+source('ML-DS/01_main_analyses/utils/misc.R')
+source('ML-DS/01_main_analyses/utils/sc_basicQC.R')
+source('ML-DS/01_main_analyses/utils/sc_utils.R')
 
 
 #---------------------------------------------------#
