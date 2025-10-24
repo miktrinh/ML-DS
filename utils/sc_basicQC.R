@@ -1,4 +1,4 @@
-source('R/utils/sc_utils.R')
+#source('utils/sc_utils.R')
 
 
 #' Run scrublet

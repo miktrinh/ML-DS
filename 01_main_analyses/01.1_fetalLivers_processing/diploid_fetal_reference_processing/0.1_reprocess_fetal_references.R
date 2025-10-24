@@ -1,15 +1,17 @@
 ##-------- Prepare Reference foetal objects (fLiver, fAdr, fKidney)  --------##
 ## 1. Reprocess remapped foetal references scRNA data for kidney, liver, adrenal
 
+setwd('ML-DS')
+
 #------------------------#
 ##      Libraries     ####
 #------------------------#
 library(tidyverse)
 library(readxl)
 library(Seurat)
-source('ML-DS/01_main_analyses/utils/misc.R')
-source('ML-DS/01_main_analyses/utils/sc_basicQC.R')
-source('ML-DS/01_main_analyses/utils/sc_utils.R')
+source('utils/misc.R')
+source('utils/sc_basicQC.R')
+source('utils/sc_utils.R')
 
 
 #---------------------------------------------------#
@@ -111,6 +113,14 @@ ggplot(a[a$lin == 'B',],aes(donorID,frac))+
 ##    1. Reprocess remapped foetal REF dataset     ####
 #-----------------------------------------------------#
 
+fetal_data_map = read_excel('~/Aneuploidy/reference_fetal_samples_mt22.xlsx')
+fetal_10X_data = list.dirs('/lustre/scratch127/cellgen/cellgeni/tickets/tic-3974/data')
+fetal_10X_data = fetal_10X_data[grepl('filtered_feature_bc_matrix$',fetal_10X_data)]
+names(fetal_10X_data) = gsub('cellranger302_count_|cellranger302_count_\\d+_|_GRCh38-1_2_0$','',basename(dirname(fetal_10X_data)))
+names(fetal_10X_data) = gsub('_','.',names(fetal_10X_data))
+
+checkmate::assert_true(all(names(fetal_10X_data) %in% gsub('_','.',fetal_data_map$channelID)))
+
 ##----- Set parameters ------##
 maxMT = 30
 minGenes = 300
@@ -121,8 +131,8 @@ clusteringRes = 10
 skipScrub = F
 skipSoup = F
 scrubScoreMax = 0.5
-scrubPath='../cleanCounts_2208/scrubletScores.tsv'
-scPath="../cleanCounts_2208/strainedCounts"
+scrubPath='scrubletScores.tsv'
+scPath="strainedCounts"
 doPlot=T
 verbose = T
 skipIfExists=T
@@ -136,7 +146,7 @@ keepMTCells=T
 ###    Add cell labels (as published)
 
 for(tissue in c('adrenal','kidney','liver')){
-  outDir = file.path('/lustre/scratch125/casm/team274sb/mt22/Aneuploidy/Results/0_reprocessing_fetalREF',tissue,'oct22') 
+  outDir = file.path('~/Aneuploidy/Results/0_reprocessing_fetalREF',tissue,'oct25') 
   plotDir = file.path(outDir,paste0(tissue,'_'))
   outPath = file.path(outDir,paste0(tissue))
   
@@ -157,12 +167,11 @@ for(tissue in c('adrenal','kidney','liver')){
     
     setwd(outDir)
     
-    dataDirs = list.files(paste0('~/lustre119_mt22/fetalREF_scRNAseq_cr3.0.2_v38-1.2.0/',tissue),full.names = T)
-    dataDirs = paste0(dataDirs,'/filtered_feature_bc_matrix')
-    names(dataDirs) = basename(dirname(dataDirs))
-    names(dataDirs) = gsub('_','.',names(dataDirs))
-    dataDirs=dataDirs[file.exists(dataDirs)]
-    dataDirs=dataDirs[sapply(dataDirs, function(x){length(list.files(x))>0})]
+    dataDirs = fetal_10X_data[names(fetal_10X_data) %in% gsub('_','.',fetal_data_map$channelID[tolower(fetal_data_map$Tissue) == tissue])]
+    checkmate::assert_true(all(file.exists(dataDirs)))
+    checkmate::assert_true(all(sapply(dataDirs, function(x){length(list.files(x))>0})))
+    #dataDirs=dataDirs[file.exists(dataDirs)]
+    #dataDirs=dataDirs[sapply(dataDirs, function(x){length(list.files(x))>0})]
     print(n_distinct(dataDirs))
     # for(i in 1:length(dataDirs)){
     #   if(!dir.exists(sprintf('%s/filtered_feature_bc_matrix',dataDirs[i]))){
@@ -182,13 +191,11 @@ for(tissue in c('adrenal','kidney','liver')){
     #metadata$orig.ident = metadata$chanelID
     metadata = NULL
     matchBy = NULL
-    cleanCountDir = NULL
-    # Run basicQC
-    plotDir = file.path(outDir,paste0(tissue,'_'))
-    outPath = file.path(outDir,paste0(tissue))
+    cleanCountDir = outDir
     
+    # Run basicQC
     QC.output = basicQC(dataDirs = dataDirs,maxMT = maxMT, minGenes=minGenes,minUMIs=minUMIs,maxBadFrac=maxBadFrac,numPCs=numPCs,clusteringRes=clusteringRes,
-                        skipScrub=skipScrub,skipSoup=skipSoup,scrubScoreMax=scrubScoreMax,scrubPath=scrubPath,
+                        cleanCountDir = cleanCountDir,skipScrub=skipScrub,skipSoup=skipSoup,scrubScoreMax=scrubScoreMax,scrubPath=scrubPath,
                         metadata=metadata,matchBy=matchBy,scPath=scPath,outPath=outPath,skipIfExists=skipIfExists,
                         doPlot=doPlot,plotDir=plotDir,verbose=verbose)
     
@@ -201,7 +208,7 @@ for(tissue in c('adrenal','kidney','liver')){
     df.out = QC.output[[2]]
     qc.summary=rbind(qc.summary,df.out)
     
-    write.csv(df.out,paste0('~/lustre_mt22/Aneuploidy/Results/0_reprocessing_fetalREF/',tissue,'/oct22/',tissue,'_qc_summary.csv'))
+    write.csv(df.out,file.path(outDir,paste0(tissue,'_qc_summary.csv')))
   }
   
   
