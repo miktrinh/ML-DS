@@ -900,7 +900,8 @@ saveFig(file.path(outDir,'gata1s_module_enrichR.down_DEGs'),plotFun_enrichR.up_p
 
 
 ##----    Chr21 / GATA1 downstream targets   -----##
-gata1s_module = read.csv('~/lustre_mt22/Aneuploidy/MLDS_scRNAseq/17_GATA1s_module/goodTAM/DESeq2_goshMEP.goodTAM.MLDS_topGeneModule.csv',row.names = 1)
+#gata1s_module = read.csv('~/lustre_mt22/Aneuploidy/MLDS_scRNAseq/17_GATA1s_module/goodTAM/DESeq2_goshMEP.goodTAM.MLDS_topGeneModule.csv',row.names = 1)
+gata1s_module = read.csv('~/lustre_mt22/MLDS_scRNAseq/manuscript_revision_2507/DESeq2_goshMEP.goodTAM.MLDS_topGeneModule.csv',row.names = 1)
 table(gata1s_module$tam_vs_mempT21_group)
 gata1s_module$group = ifelse(gata1s_module$tam_vs_mempT21_group == 'notDE',gata1s_module$direction,gata1s_module$tam_vs_mempT21_group)
 # Subset to keep just GATA1s gene module

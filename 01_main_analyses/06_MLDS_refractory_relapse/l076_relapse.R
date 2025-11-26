@@ -587,24 +587,49 @@ cnt$cellID = rownames(cnt)
 cnt = pivot_longer(cnt,cols = gene,names_to = 'gene',values_to = 'norm_count')
 tmp = cbind(tmp[match(cnt$cellID,tmp$cellID),],cnt[,colnames(cnt)!='cellID'])
 
+
 tmp$group = ifelse(tmp$group_tmp != 'others' & tmp$disease == 'MLDS' & tmp$timePoint == 'Diagnostic' & !tmp$donorID %in% c('L038','L076'),'responsive_MLDS',
                    ifelse(tmp$group_tmp != 'others' & tmp$disease == 'MLDS' & tmp$donorID %in% c('L038','L076'),as.character(tmp$group_tmp),
                           ifelse(tmp$group_tmp != 'others' & tmp$disease == 'TAM' & tmp$timePoint == 'Diagnostic','TAM',as.character(tmp$group_tmp))))
-tmp$group[tmp$group == 'others'] = 'normal'
-tmp$group[tmp$cellID %in% l038$cellID[l038$group == 'clone1']] = 'L038_D_clone1'
-tmp$group[tmp$cellID %in% l038$cellID[l038$group == 'clone2']] = 'L038_TP1_clone2'
-tmp$group[tmp$cellID %in% l038$cellID[l038$group == 'clone2_D']] = 'L038_D_clone2'
-tmp = tmp[tmp$group !='L038_TP1',]
-tmp$group = factor(tmp$group,c('normal','TAM','responsive_MLDS',
-                               'L038_D_clone1','L038_D_clone2','L038_TP1_clone2','clone2_ery',
-                               'L038_Diagnostic','L038_TP1','L076_Blood','L076_BM','L076_D.Relapse','L076_D.Relapse2'))
+
+
+tmp = tmp %>% dplyr::mutate(group = dplyr::case_when(
+  !annot %in% c("Tum_MK?",'Tumour','Tumour_WT','unsure_Tumour') ~ 'normal',
+  annot == 'Tumour' & disease == 'TAM' & timePoint == 'Diagnostic' ~ 'TAM',
+  annot == 'Tumour' & disease == 'MLDS' & timePoint == 'Diagnostic' & !donorID %in% c('L038','L076') ~ 'responsive_MLDS',
+  annot == 'Tumour' & disease == 'MLDS' & timePoint == 'Diagnostic' & donorID %in% c('L038') & cellID %in% l038_d_mdat$cellID[l038_d_mdat$group == 'clone1_D'] ~ 'L038_D_clone1',
+  annot == 'Tumour' & disease == 'MLDS' & timePoint == 'Diagnostic' & donorID %in% c('L038') & cellID %in% l038_d_mdat$cellID[l038_d_mdat$group == 'clone2_D'] ~ 'L038_D_clone2',
+  annot == 'Tumour' & disease == 'MLDS' & timePoint == 'TP1' & donorID %in% c('L038') & cellID %in% l038$cellID[l038$group == 'clone2']  ~ 'L038_TP1_clone2',
+  annot == 'Tumour' & disease == 'MLDS' & timePoint == 'TP1' & donorID %in% c('L038') & cellID %in% l038$cellID[l038$group == 'clone2_ery'] ~ 'clone2_ery',
+  annot == 'Tumour' & disease == 'MLDS' & timePoint == 'Diagnostic' & donorID %in% c('L076') & tissue == 'Blood' ~ 'L076_Blood',
+  annot == 'Tumour' & disease == 'MLDS' & timePoint == 'Diagnostic' & donorID %in% c('L076') & tissue == 'BM' ~ 'L076_BM',
+  annot == 'Tumour' & disease == 'MLDS' & timePoint == 'D.Relapse' & donorID %in% c('L076') & tissue == 'BM' ~ 'L076_D.Relapse',
+  annot == 'Tumour' & disease == 'MLDS' & timePoint == 'D.Relapse2' & donorID %in% c('L076') & tissue == 'BM' ~ 'L076_D.Relapse2',
+  .default = 'others'
+  ),
+  group = factor(group,c('normal','TAM','responsive_MLDS',
+                         'L038_D_clone1','L038_D_clone2','L038_TP1_clone2','clone2_ery',
+                         'L076_Blood','L076_BM','L076_D.Relapse','L076_D.Relapse2','others'))) %>% 
+  dplyr::filter(group != 'others')
+  
+table(!tmp$group %in% c('normal','TAM','responsive_MLDS',
+                 'L038_D_clone1','L038_D_clone2','L038_TP1_clone2','clone2_ery',
+                 'L038_Diagnostic','L038_TP1','L076_Blood','L076_BM','L076_D.Relapse','L076_D.Relapse2'))                  
+
+# tmp$group[tmp$cellID %in% l038$cellID[l038$group == 'clone1']] = 'L038_D_clone1'
+# tmp$group[tmp$cellID %in% l038$cellID[l038$group == 'clone2']] = 'L038_TP1_clone2'
+# tmp$group[tmp$cellID %in% l038$cellID[l038$group == 'clone2_D']] = 'L038_D_clone2'
+# tmp = tmp[tmp$group !='L038_TP1',]
+
 tmp$group2 = ifelse(!tmp$donorID %in% c('L038','L076','L156'),'Remission',
                     ifelse(tmp$donorID == 'L076','Relapse',
                            ifelse(tmp$donorID == 'L156','Recurrent',
                                   ifelse(tmp$donorID == 'L038','Refractory','others'))))
 tmp$group2[tmp$group == 'normal'] = 'Normal'
-tmp$group2 = factor(tmp$group2,(c('Normal','Remission','Recurrent','Relapse','Refractory')))
 table(tmp$group2)
+table(tmp$group)
+tmp$group2 = factor(tmp$group2,c('Normal','Remission','Recurrent','Relapse','Refractory'))
+
 
 tmp = tmp[tmp$gene %in% gene,]
 tmp$gene = factor(tmp$gene,gene)

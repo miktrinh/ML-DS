@@ -1100,6 +1100,7 @@ fig2a_2nAK_Liv_cellTypeContribution = function(){
   wilcox.test(dd$ctFrac[dd$Genotype == 'T21' & dd$broadLineage3 == 'B lineage'],
               dd$ctFrac[dd$Genotype == 'Diploid' & dd$broadLineage3 == 'B lineage'],alternative = 'less')
   
+  
   ## Binomial test - Triploid case
   ## expected probability of Ery/MK/Mast cells is taken as the mean proportion across all diploid samples
   ## n_trials = number of haematopoietic cells detected in Triploid case
@@ -2158,7 +2159,7 @@ fig3a_MLDS_UMAP = function(){
                                                                     'Monocyte/Macrophage','Dendritic cells','Neutrophil',
                                                                     'B lineage','T/NK lineage','TAM','TAM_Relapse','Tumour','Tumour_postChemo','Tumour_Refractory','Tumour_Relapse','Tumour_Relapse2','Tumour_unsure')))
       
-      boxed.labels(mids$UMAP_1,mids$UMAP_2,
+      plotrix::boxed.labels(mids$UMAP_1,mids$UMAP_2,
                    labels=mids$label,cex = 0.9,xpad = 1.9,ypad = 1.8,border = F,
                    col='black')
     }
@@ -2429,9 +2430,9 @@ fig2a_MLDS_GATA1s_status = function(){
   }
   
   if(version == 'v1'){
-    saveFig(file.path(plotDir,'Fig2_MLDS_GATA1s_UMAP_v1'),plotFun_GATA1s_UMAP,rawData=dd,width = 3.3,height = 3.0,res = 500)  
+    saveFig(file.path(plotDir,'Fig2_MLDS_GATA1s_UMAP_v1'),plotFun_GATA1s_UMAP,rawData=dd[,!colnames(dd) %in% c('GATA1s_status','GATA1_status')],width = 3.3,height = 3.0,res = 500)  
   }else{
-    saveFig(file.path(plotDir,'Fig2_MLDS_GATA1s_UMAP_v2'),plotFun_GATA1s_UMAP,rawData=dd,width = 3.3,height = 3.0,res = 500)
+    saveFig(file.path(plotDir,'Fig2_MLDS_GATA1s_UMAP_v2'),plotFun_GATA1s_UMAP,rawData=dd[,!colnames(dd) %in% c('GATA1s_status','GATA1_status')],width = 3.3,height = 3.0,res = 500)
   }
   
   
@@ -3109,7 +3110,116 @@ supFig3D_MLDS_LRv2_heatmap = function(){
 
 
 
+# # Compute the statistics for Figure 3b -----------------------------------------
+# # Old version, the median value does not match the plot in figure 3b
+# fig3b_data = read.delim('~/lustre_mt22/Aneuploidy/manuscriptDraft_0424/Plots/Fig3x_medianScorePerGroup_GATA1s_topGenes_rawData.tsv',sep = '\t')
+# ggplot(fig3b_data,aes(groupID,medianScore))+
+#   geom_point()+
+#   facet_grid(.~ group + dataset_ID ,space = 'free_x',scales = 'free_x')+
+#   theme_bw()+
+#   theme(axis.text.x = element_text(angle=90,vjust = 0.5,hjust = 1))
 
+
+# Figure 4C --------------------------------------------------------------------
+mlds_srat_fp <- "~/ML-DS/Results/03_MLDS_annotation/MLDS_clean_annotated_2408_noUnknowns.RDS"
+mlds_mdat_fp <- "~/ML-DS/Results/03_MLDS_annotation/MLDS_clean_annotated_2408_noUnknowns_mdat_2508.csv"
+mlds = readRDS(mlds_srat_fp)
+
+l076_fp <- "~/ML-DS/Results/06_MLDS_refractory_relapse/L076/L076_sratObj.RDS"
+l038_fp <- "~/ML-DS/Results/06_MLDS_refractory_relapse/L038/L038_sratObj.RDS"
+l038_d_mdat_fp <- "~/ML-DS/Results/06_MLDS_refractory_relapse/L038/L038_Diagnostic_AIresult_mdat.csv"
+l038_tp1_mdat_fp <- "~/ML-DS/Results/06_MLDS_refractory_relapse/L038/L038_TP1_AIresult_mdat.csv"
+
+##------------------------------------------------##
+##    Quantify expression levels of key genes   ####
+##------------------------------------------------##
+gene =  c('H1F0','ADAMTS1','FHL2','CXCL8','EPS8',#'IFI27','GJA1',
+          #'SMAD3',
+          'EPS15','MEIS2',#'ARID1B', # up in R2D_vs_D(BM)
+          'CD82',
+          'LDLR','CD81',
+          'COL18A1')
+#'CD34','EPCAM','NR4A1')#,
+#'CD34','ZFP36','CD7','SAAL1')
+#
+tmp = mlds@meta.data
+cnt = as.data.frame(t(mlds@assays$RNA@data[gene,]))
+cnt$cellID = rownames(cnt)
+cnt = pivot_longer(cnt,cols = gene,names_to = 'gene',values_to = 'norm_count')
+tmp = cbind(tmp[match(cnt$cellID,tmp$cellID),],cnt[,colnames(cnt)!='cellID'])
+
+
+tmp$group = ifelse(tmp$group_tmp != 'others' & tmp$disease == 'MLDS' & tmp$timePoint == 'Diagnostic' & !tmp$donorID %in% c('L038','L076'),'responsive_MLDS',
+                   ifelse(tmp$group_tmp != 'others' & tmp$disease == 'MLDS' & tmp$donorID %in% c('L038','L076'),as.character(tmp$group_tmp),
+                          ifelse(tmp$group_tmp != 'others' & tmp$disease == 'TAM' & tmp$timePoint == 'Diagnostic','TAM',as.character(tmp$group_tmp))))
+
+
+tmp = tmp %>% dplyr::mutate(group = dplyr::case_when(
+  !annot %in% c("Tum_MK?",'Tumour','Tumour_WT','unsure_Tumour') ~ 'normal',
+  annot == 'Tumour' & disease == 'TAM' & timePoint == 'Diagnostic' ~ 'TAM',
+  annot == 'Tumour' & disease == 'MLDS' & timePoint == 'Diagnostic' & !donorID %in% c('L038','L076') ~ 'responsive_MLDS',
+  annot == 'Tumour' & disease == 'MLDS' & timePoint == 'Diagnostic' & donorID %in% c('L038') & cellID %in% l038_d_mdat$cellID[l038_d_mdat$group == 'clone1_D'] ~ 'L038_D_clone1',
+  annot == 'Tumour' & disease == 'MLDS' & timePoint == 'Diagnostic' & donorID %in% c('L038') & cellID %in% l038_d_mdat$cellID[l038_d_mdat$group == 'clone2_D'] ~ 'L038_D_clone2',
+  annot == 'Tumour' & disease == 'MLDS' & timePoint == 'TP1' & donorID %in% c('L038') & cellID %in% l038$cellID[l038$group == 'clone2']  ~ 'L038_TP1_clone2',
+  annot == 'Tumour' & disease == 'MLDS' & timePoint == 'TP1' & donorID %in% c('L038') & cellID %in% l038$cellID[l038$group == 'clone2_ery'] ~ 'clone2_ery',
+  annot == 'Tumour' & disease == 'MLDS' & timePoint == 'Diagnostic' & donorID %in% c('L076') & tissue == 'Blood' ~ 'L076_Blood',
+  annot == 'Tumour' & disease == 'MLDS' & timePoint == 'Diagnostic' & donorID %in% c('L076') & tissue == 'BM' ~ 'L076_BM',
+  annot == 'Tumour' & disease == 'MLDS' & timePoint == 'D.Relapse' & donorID %in% c('L076') & tissue == 'BM' ~ 'L076_D.Relapse',
+  annot == 'Tumour' & disease == 'MLDS' & timePoint == 'D.Relapse2' & donorID %in% c('L076') & tissue == 'BM' ~ 'L076_D.Relapse2',
+  .default = 'others'
+),
+group = factor(group,c('normal','TAM','responsive_MLDS',
+                       'L038_D_clone1','L038_D_clone2','L038_TP1_clone2','clone2_ery',
+                       'L076_Blood','L076_BM','L076_D.Relapse','L076_D.Relapse2','others'))) %>% 
+  dplyr::filter(group != 'others')
+
+table(!tmp$group %in% c('normal','TAM','responsive_MLDS',
+                        'L038_D_clone1','L038_D_clone2','L038_TP1_clone2','clone2_ery',
+                        'L038_Diagnostic','L038_TP1','L076_Blood','L076_BM','L076_D.Relapse','L076_D.Relapse2'))                  
+
+# tmp$group[tmp$cellID %in% l038$cellID[l038$group == 'clone1']] = 'L038_D_clone1'
+# tmp$group[tmp$cellID %in% l038$cellID[l038$group == 'clone2']] = 'L038_TP1_clone2'
+# tmp$group[tmp$cellID %in% l038$cellID[l038$group == 'clone2_D']] = 'L038_D_clone2'
+# tmp = tmp[tmp$group !='L038_TP1',]
+
+tmp$group2 = ifelse(!tmp$donorID %in% c('L038','L076','L156'),'Remission',
+                    ifelse(tmp$donorID == 'L076','Relapse',
+                           ifelse(tmp$donorID == 'L156','Recurrent',
+                                  ifelse(tmp$donorID == 'L038','Refractory','others'))))
+tmp$group2[tmp$group == 'normal'] = 'Normal'
+table(tmp$group2)
+table(tmp$group)
+tmp$group2 = factor(tmp$group2,c('Normal','Remission','Recurrent','Relapse','Refractory'))
+
+
+tmp = tmp[tmp$gene %in% gene,]
+tmp$gene = factor(tmp$gene,gene)
+library(ggbeeswarm)
+ccs = c('Normal'=grey(0.8),'Remission'='#2D4372','Refractory'=col25[2],'Relapse'=col25[5],'Recurrent'=col25[5])
+
+#tmp = read.delim(file.path(plotDir,'Fig4E_badMLDS_markers_rawData.tsv'),sep = '\t')
+
+plot_normalisedExpression = function(noFrame=FALSE,noPlot=FALSE){
+  p = ggplot(tmp[tmp$gene %in% gene,],aes(group,norm_count,fill=group2))+
+    geom_boxplot(outliers=F,outlier.shape = NA,colour='black',width=0.7,linewidth=0.3)+
+    scale_fill_manual(values = ccs)+
+    facet_grid(gene~group2,scales = 'free',space = 'free_x')+
+    #geom_quasirandom(size=0.1,alpha=0.1)+
+    theme_classic(base_size = 9)+
+    theme(axis.text.x = element_text(angle=90,vjust = 0.5,hjust = 1),
+          strip.background = element_blank(),
+          axis.line = element_blank(),
+          axis.text = element_text(colour='black'),
+          panel.spacing.y = unit(0.1,'cm'),
+          axis.ticks = element_line(colour='black'),axis.title = element_text(colour='black'),
+          panel.border = element_rect(fill=F,colour='black'))+xlab('')+ylab('Normalized expression')
+  print(p)
+}
+
+#saveFig(file.path(plotDir,paste0('Fig4E_badMLDS_markers')),plot_normalisedExpression,rawData=tmp,width = 4.5,height = 13,res = 500,useDingbats = F)
+saveFig(file.path(plotDir,paste0('Fig4E_badMLDS_markers')),plot_normalisedExpression,rawData=NULL,width = 4,height = 6,res = 500,useDingbats = F)
+saveFig(file.path(plotDir,paste0('Fig4E_badMLDS_markers_hor')),plot_normalisedExpression,rawData=tmp,width = 14,height = 4.5,res = 500,useDingbats = F)
+saveFig(file.path(plotDir,paste0('Fig4E_badMLDS_markers_hor')),plot_normalisedExpression,rawData=tmp,width = 10,height = 4,res = 500,useDingbats = F)
 
 ##------------------------------------##
 ##        Supplementary Tables      ####

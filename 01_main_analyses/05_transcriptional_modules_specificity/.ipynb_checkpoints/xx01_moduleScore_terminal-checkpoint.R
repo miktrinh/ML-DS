@@ -1,7 +1,6 @@
 ##--- Module scoring in bulk / sc / sn RNAseq dataset ---##
 
 source('~/lustre_mt22/Aneuploidy/scripts/finalScripts/xx01_moduleScore_helperFunctions.R')
-source('~/ML-DS/01_main_analyses/05_transcriptional_modules_specificity/xx01_moduleScore_bulkRNA_helperFunctions.R')
 source('~/lustre_mt22/generalScripts/utils/misc.R')
 
 
@@ -10,7 +9,7 @@ source('~/lustre_mt22/generalScripts/utils/misc.R')
 ##----------------------------##
 
 #module_type = 'MLDS_topGenes_2410_v2' 
-module_type = 'GATA1s_topGenes2v2_2410' 
+module_type = 'L076_relapse_module' 
 ## 24-11 version: using the same list of genes, but bi-directional UCell
 # MLDS_topGenes_2410_cf2
 # GATA1s_topGenes2v2_2410
@@ -171,8 +170,7 @@ if(module_type == 'GATA1s_topGenes3'){
 
 ##----- GATA1s top genes 24-10 version
 if(module_type == 'GATA1s_topGenes2v2_2410'){
-  #gata1s_module = read.csv('~/lustre_mt22/Aneuploidy/MLDS_scRNAseq/Results/4_GATA1s_module/goodTAM/oct24/DESeq2_goshMEP.goodTAM.MLDS_topGeneModule.csv',row.names = 1)
-  gata1s_module = read.csv('~/lustre_mt22/MLDS_scRNAseq/manuscript_revision_2507/DESeq2_goshMEP.goodTAM.MLDS_topGeneModule.csv',row.names = 1)
+  gata1s_module = read.csv('~/lustre_mt22/Aneuploidy/MLDS_scRNAseq/Results/4_GATA1s_module/goodTAM/oct24/DESeq2_goshMEP.goodTAM.MLDS_topGeneModule.csv',row.names = 1)
   table(gata1s_module$tam_vs_mempT21_group)
   gata1s_module$group = ifelse(gata1s_module$tam_vs_mempT21_group == 'notDE',gata1s_module$direction,gata1s_module$tam_vs_mempT21_group)
   ## Select top genes only
@@ -762,6 +760,8 @@ fig3G_moduleScore_groupMedian = function(){
         stat_summary(
           aes(group = group), fun = median, fun.min = median, fun.max = median,
           geom = "crossbar", color = "black", width = 0.9, lwd = 0.2,
+
+          # add this bit here to your stat_summary function
           position=position_dodge(width=0.75)
         )+
         geom_quasirandom(data=d[d$Genotype == 'diploid',],width = 0.5,size=1.3,alpha=1)+
@@ -817,6 +817,7 @@ wilcox.test(mean_df$mu[mean_df$group == 'TAM / MLDS'],mean_df$mu[mean_df$group =
 wilcox.test(mean_df$mu[mean_df$group == 'TAM / MLDS'],mean_df$mu[mean_df$group == 'Other leukaemia' & mean_df$dataset_ID != 'MDS'],alternative = 'greater')
 wilcox.test(mean_df$mu[mean_df$group == 'TAM / MLDS'],mean_df$mu[mean_df$dataset_ID == 'MDS'],alternative = 'greater')
 wilcox.test(mean_df$mu[mean_df$group == 'TAM / MLDS' & mean_df$dataset_ID == 'TAM'],mean_df$mu[mean_df$group == 'TAM / MLDS' & mean_df$dataset_ID == 'MLDS'])
+
 
 ##----------------------------------------------##
 ##    Score module in bulkRNAseq dataset      ####
